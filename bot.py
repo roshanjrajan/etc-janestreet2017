@@ -4,6 +4,7 @@ from __future__ import print_function
 import sys
 import socket
 import json
+import random
 
 def connect():
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -25,6 +26,16 @@ def main():
     while(1):
         message = read(exchange)
         print(message)
+        type_of_order=message['type']
+        print(type_of_order)
+        if type_of_order == 'book':
+            symbol = message['symbol']
+            if symbol == 'BOND':
+                for sell_order in message['sell']:
+                    if int(sell_order[0])<1000:
+                            orderID=random.randint(1, 10**5)
+                            write(exchange, {"type": "add", "order_id": orderID, "symbol": "BOND", "dir": "BUY", "price": sell_order[0], "size": sell_order[1]})
+)
 
 
 if __name__ == "__main__":
