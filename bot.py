@@ -5,6 +5,7 @@ import sys
 import socket
 import json
 import random
+import math
 
 def connect():
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -35,11 +36,12 @@ def trash_strat(priceVale, numberVale, priceValbz, numberValbz):
 
 def main():
     v_tran = 0
+    vb_counter = 0
+    vl_counter = 0
     exchange = connect()
     write(exchange, {"type": "hello", "team": "DATAGODS"})
     hello_from_exchange = read(exchange)
     print("The exchange replied:", hello_from_exchange, file=sys.stderr)
-    bond_counter=0
     while(1):
         message = read(exchange)
         type_of_order=message['type']
@@ -69,32 +71,55 @@ def main():
                     v_tran +=1
             if(v_tran == 2):
                 v_trade=trash_strat(VALE_price,VALE_number,VALBZ_price,VALBZ_number)
+                shares=min(VALBZ_number,VALE_number)
                 if v_trade==1:
-                    submit(exchange, 'add','VALBZ', 'BUY', VALBZ_price, min(VALBZ_number,VALE_number))
-                    submit(exchange, 'add','VALE', 'SELL', VALE_price, min(VALBZ_number,VALE_number))
+                    submit(exchange, 'add','VALBZ', 'BUY', VALBZ_price, shares)
+                    submit(exchange, 'add','VALE', 'SELL', VALE_price, shares)
+
                 elif v_trade==0:
-                    submit(exchange, 'add','VALE', 'BUY', VALE_price, min(VALBZ_number,VALE_number))
-                    submit(exchange, 'add','VALBZ', 'SELL', VALBZ_price, min(VALBZ_number,VALE_number))
+                    submit(exchange, 'add','VALE', 'BUY', VALE_price, shares)
+                    submit(exchange, 'add','VALBZ', 'SELL', VALBZ_price, shares)
                 v_tran = 0
 
         if type_of_order == 'fill':
             if message['symbol']=='BOND':
                 if message['dir']== 'BUY':
                     print(message)
-		    bond_counter=bond_counter+int(message['size'])
                 if message['dir'] == 'SELL':
 		    print(message)
-                    bond_counter=bond_counter-int(message['size'])
-            if (message['symbol']=='VALBZ' or message['symbol']=='VALE'):
-                if message['dir']== 'BUY':
-                    print(message)
-                    write(exchange, {"type": 'convert', "order_id":random.randint(1, 10**5) , "symbol": message['symbol'], "dir": "SELL", "size": message['size']})
-	if type_of_order=='ack':
+		elif message['symbol']=='VALBZ':
+                    if message['dir']== 'BUY':
+                        print(message)
+                        vb_counter+=message['size']
+                        #write(exchange, {"type": 'convert', "order_id":random.randint(1, 10**5) , "symbol": message['symbol'], "dir": "SELL", "size": message['size']})
+                        #vb_counter
+                    if message['dir']== 'SELL':
+                        print(message)
+                        vb_counter-=message['size']
+                        #write(exchange, {"type": 'convert', "order_id":random.randint(1, 10**5) , "symbol": message['symbol'], "dir": "SELL", "size": message['size']})
+
+        elif message['symbol']=='VALE':
+            if message['dir']== 'BUY':
+                print(message)
+                vl_counter+=message['size']
+                #write(exchange, {"type": 'convert', "order_id":random.randint(1, 10**5) , "symbol": message['symbol'], "dir": "SELL", "size": message['size']})
+            if message['dir']== 'SELL':
+                print(message)
+                vl_counter-=message['size']
+                #write(exchange, {"type": 'convert', "order_id":random.randint(1, 10**5) , "symbol": message['symbol'], "dir": "SELL", "size": message['size']})
+    if type_of_order=='ack':
 		print(message)
-#	if type_of_order=='reject':
-#		print(message)
 	if type_of_order=='error':
 		print(message)
+    if vl_counter>vb_counter+4:
+        difference=(math.abs(vl_counter)+math.abs(vb_counter))/2
+        number=vl_counter-difference
+        write(exchange, {"type": 'convert', "order_id":random.randint(1, 10**5) , "symbol": message['symbol'], "dir": "SELL", "size": number})
+
+    if vb_counter>vl_counter+4:
+        difference=(math.abs(vb_counter)+math.abs(vl_counter))/2
+        number=vb_counter-difference
+        write(exchange, {"type": 'convert', "order_id":random.randint(1, 10**5) , "symbol": message['symbol'], "dir": "SELL", "size": number})
 
 if __name__ == "__main__":
     main()
