@@ -25,6 +25,7 @@ def main():
     while(1):
         message = read(exchange)
         print(message)
-        print('One Message Read')
+
+
 if __name__ == "__main__":
     main()
