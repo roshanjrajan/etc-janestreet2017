@@ -26,12 +26,11 @@ def main():
     bond_counter=0
     while(1):
         message = read(exchange)
-        print(message)
         type_of_order=message['type']
-        print(type_of_order)
         if type_of_order == 'book':
-            symbol = message['symbol']
+	    symbol = message['symbol']
             if symbol == 'BOND':
+	        print(message)
                 for sell_order in message['sell']:
                     if int(sell_order[0])<1000:
                             orderID=random.randint(1, 10**5)
@@ -43,10 +42,12 @@ def main():
                         if bond_counter>number_being_sold:
                             write(exchange, {"type": "add", "order_id": orderID, "symbol": "BOND", "dir": "SELL", "price": buy_order[0], "size": number_being_sold})
         if type_of_order == 'fill':
-            if message[symbol]='BOND':
-                if message['dir'] = 'BUY':
-                    bond_counter=bond_counter+int(message['size'])
-                if message['dir'] = 'SELL':
-                    bond_counter=bond_counter-int(message['size'])
+		if message['symbol']=='BOND':
+                	if message['dir']== 'BUY':
+                    		print(message)
+				bond_counter=bond_counter+int(message['size'])
+                	if message['dir'] == 'SELL':
+				print(message)
+                    		bond_counter=bond_counter-int(message['size'])
 if __name__ == "__main__":
     main()
