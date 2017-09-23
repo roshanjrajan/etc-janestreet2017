@@ -22,6 +22,7 @@ def main():
     write(exchange, {"type": "hello", "team": "DATAGODS"})
     hello_from_exchange = read(exchange)
     print("The exchange replied:", hello_from_exchange, file=sys.stderr)
-
+    while(1):
+       print(read(exchange))
 if __name__ == "__main__":
     main()
