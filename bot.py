@@ -8,7 +8,7 @@ import random
 
 def connect():
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect(("test-exch-DATAGODS", 25000))
+    s.connect(("production", 25000))
     return s.makefile('rw', 1)
 
 def write(exchange, obj):
@@ -46,7 +46,6 @@ def main():
         if type_of_order == 'book':
 	    symbol = message['symbol']
             if symbol == 'BOND':
-	        print(message)
                 for sell_order in message['sell']:
                     if int(sell_order[0])<1000:
                             orderID=random.randint(1, 10**5)
@@ -86,10 +85,10 @@ def main():
                 if message['dir'] == 'SELL':
 		    print(message)
                     bond_counter=bond_counter-int(message['size'])
-		if message['symbol']=='VALBZ' or message['symbol']=='VALE':
-                    if message['dir']== 'BUY':
-                        print(message)
-                        write(exchange, {"type": 'convert', "order_id":random.randint(1, 10**5) , "symbol": message['symbol'], "dir": "SELL", "size": message['size']})
+            if (message['symbol']=='VALBZ' or message['symbol']=='VALE'):
+                if message['dir']== 'BUY':
+                    print(message)
+                    write(exchange, {"type": 'convert', "order_id":random.randint(1, 10**5) , "symbol": message['symbol'], "dir": "SELL", "size": message['size']})
 	if type_of_order=='ack':
 		print(message)
 #	if type_of_order=='reject':
