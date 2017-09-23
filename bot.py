@@ -34,9 +34,9 @@ def trash_strat(priceVale, numberVale, priceValbz, numberValbz):
     return(23)
 
 def etf_strat(gs_price,ms_price,wfc_price,xlf_price,b_price):
-    if ((gs_price*2+ms_price*3+wfc_price*2+b_price*3)>xlf_price*10+100):
+    if ((gs_price*2+ms_price*3+wfc_price*2+b_price*3)>1.01*(xlf_price*10+100)):
         return(1)
-    if ((gs_price*2+ms_price*3+wfc_price*2+b_price*3)<xlf_price*10+100):
+    if ((gs_price*2+ms_price*3+wfc_price*2+b_price*3)<0.99*(xlf_price*10+100)):
         return(0)
     return(23)
 
@@ -44,6 +44,7 @@ def etf_strat(gs_price,ms_price,wfc_price,xlf_price,b_price):
 def main():
     v_tran = 0
     what = 0
+    t_count = 0
     exchange = connect()
     write(exchange, {"type": "hello", "team": "DATAGODS"})
     hello_from_exchange = read(exchange)
@@ -54,12 +55,14 @@ def main():
         if type_of_order == 'book':
 	    symbol = message['symbol']
             if symbol == 'BOND':
+                if len(message['sell']):
+                    what+=1
+                    b_price=message['sell'][0][0]
+                    
                 for sell_order in message['sell']:
                     if int(sell_order[0])<1000:
                             orderID=random.randint(1, 10**5)
-                            bond_price=sell_order[0]
-                            what+=1
-                            write(exchange, {"type": "add", "order_id": orderID, "symbol": "BOND", "dir": "BUY", "price": bond_price , "size": sell_order[1]})
+                            write(exchange, {"type": "add", "order_id": orderID, "symbol": "BOND", "dir": "BUY", "price":sell_order[0] , "size": sell_order[1]})
                 for buy_order in message['buy']:
                     if int(buy_order[0])>=1001:
                         orderID=random.randint(1, 10**5)
@@ -104,19 +107,19 @@ def main():
                     what+=1
             if what==5:
                 what_do=etf_strat(gs_price,ms_price,wfc_price,xlf_price,b_price)
-                if what_do=1:
-                    submit(exchange, 'add','XLF', 'BUY', XLF_price, 10)
-                    submit(exchange, 'add','GS', 'SELL', GS_price, 10))
-                    submit(exchange, 'add','MS', 'SELL', MS_price, 10))
-                    submit(exchange, 'add','WFC', 'SELL', WFC_price, 10))
-                    submit(exchange, 'add','BOND', 'SELL', WFC_price, 10))
-                if what_do=0:
-                    submit(exchange, 'add','XLF', 'SELL', XLF_price, 10)
-                    submit(exchange, 'add','GS', 'BUY', GS_price, 10))
-                    submit(exchange, 'add','MS', 'BUY', MS_price, 10))
-                    submit(exchange, 'add','WFC', 'BUY', WFC_price, 10))
-                    submit(exchange, 'add','BOND', 'BUY', WFC_price, 10))
-            what=0
+                if what_do==1:
+                    submit(exchange, 'add','XLF', 'BUY', xlf_price, 10)
+                    submit(exchange, 'add','GS', 'SELL', gs_price, 10)
+                    submit(exchange, 'add','MS', 'SELL', ms_price, 10)
+                    submit(exchange, 'add','WFC', 'SELL', wfc_price, 10)
+                    submit(exchange, 'add','BOND', 'SELL', b_price, 10)
+                if what_do==0:
+                    submit(exchange, 'add','XLF', 'SELL', xlf_price, 10)
+                    submit(exchange, 'add','GS', 'BUY', gs_price, 10)
+                    submit(exchange, 'add','MS', 'BUY', ms_price, 10)
+                    submit(exchange, 'add','WFC', 'BUY', wfc_price, 10)
+                    submit(exchange, 'add','BOND', 'BUY', b_price, 10)
+                what=0
 
 
         if type_of_order == 'fill':
@@ -134,11 +137,11 @@ def main():
                 if message['dir']== 'BUY':
                     print(message)
                     write(exchange, {"type": 'convert', "order_id":random.randint(1, 10**5) , "symbol": message['symbol'], "dir": "SELL", "size": message['size']})
-                    print('XLF CONVERTED')
+                    print('XLF CONVERTED due to buy signal')
                 if message['dir']== 'SELL':
                     print(message)
                     write(exchange, {"type": 'convert', "order_id":random.randint(1, 10**5) , "symbol": message['symbol'], "dir": "BUY", "size": message['size']})
-                    print('XLF CONVERTED')
+                    print('XLF CONVERTED due to sell signal')
 	if type_of_order=='ack':
 		print(message)
 #	if type_of_order=='reject':
