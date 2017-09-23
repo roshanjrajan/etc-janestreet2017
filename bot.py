@@ -8,7 +8,7 @@ import random
 
 def connect():
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect(("production", 25000))
+    s.connect(("test-exch-DATAGODS", 25000))
     return s.makefile('rw', 1)
 
 def write(exchange, obj):
